@@ -14,6 +14,7 @@ import requests
 import csv
 from itertools import islice
 from urllib.parse import urlparse
+from bs4 import BeautifulSoup
 
 def error_check(error):
     data.append("unsuccessful")
@@ -80,13 +81,22 @@ def legistar_check(site):
 #    Legistar site = 'https://alameda.legistar.com/Calendar.aspx'
 
 
+def iframe_links(soup):
+    try:
+        for iframe in soup.findAll('iframe'):
+            return iframe['src']
+    except Exception as e:
+        return None
+
+def soupify(response):
+    return BeautifulSoup(response.text, 'html.parser')
 
 
 session = HTMLSession()
 i = 0
 
-output_file = open('D:\\Github\\civic-scraper_Mark\\granicus_list4.csv', 'a+')
-with open ('D:\Github\civic-scraper_Mark\\CA_city_websites_final.csv', encoding="utf-8") as csvfile:
+output_file = open('C:\\Users\\ken\\PycharmProjects\\city-agenda-scraper\\granicus_list4.csv', 'a+')
+with open ('C:\\Users\\ken\\PycharmProjects\\city-agenda-scraper\\AHP parser\\CA_city_websites_final.csv', encoding="utf-8") as csvfile:
     reader = csv.reader((x.replace('\0', '') for x in csvfile))
 
     output_file.write(', '.join([
@@ -120,6 +130,10 @@ with open ('D:\Github\civic-scraper_Mark\\CA_city_websites_final.csv', encoding=
             error_check(e)
             continue
         sites = response.html.absolute_links
+        soup = soupify(response)
+        x = iframe_links(soup)
+        if x != None:
+            sites.add(x)
         for site in sites:
             if 'legistar' in site:
                 legistar = legistar_check(site)
